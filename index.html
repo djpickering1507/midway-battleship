@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battle of Midway — Battleship</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;background:#0a0f1a;color:#c8d8e8;min-height:100vh;padding:1.5rem}
+h1{font-size:13px;font-weight:400;letter-spacing:4px;text-transform:uppercase;color:#5a7a9a;margin-bottom:2px}
+h2{font-size:24px;font-weight:400;color:#e0eaf5;margin-bottom:4px;letter-spacing:1px}
+.subtitle{font-size:11px;letter-spacing:3px;color:#3a5a7a;text-transform:uppercase;margin-bottom:1.5rem}
+#game{max-width:740px;margin:0 auto}
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem}
+.board-wrap{display:flex;flex-direction:column;gap:6px}
+.board-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7a9ab8;font-weight:400}
+table{border-collapse:collapse;width:100%}
+td{width:10%;aspect-ratio:1;border:1px solid #1a2f4a;cursor:default;text-align:center;font-size:11px;transition:background 0.12s}
+td.water{background:#0d1826}
+td.ship-hit{background:#8b1a1a;color:#ffaaaa;font-size:13px}
+td.miss{background:#0f1e2e;color:#2a4a6a;font-size:12px}
+td.ship-show{background:#1a3a5a;border-color:#2a5a8a}
+td.sunk{background:#5c0f0f;color:#ff8888;font-size:13px}
+td.enemy-target:hover{background:#2a4a1a;cursor:crosshair;border-color:#4a8a2a}
+.coord-cell{background:transparent!important;border:none!important;color:#2a4a6a;font-size:9px;letter-spacing:1px;cursor:default!important;width:18px}
+.status-bar{background:#0d1826;border:1px solid #1a3a5a;border-radius:6px;padding:12px 16px;margin-bottom:1rem;min-height:50px;display:flex;align-items:center;gap:12px}
+.status-icon{font-size:20px;flex-shrink:0}
+.status-text{font-size:13px;color:#b0c8e0;line-height:1.5}
+.ships-remaining{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.fleet-panel{background:#0d1826;border:1px solid #1a3a5a;border-radius:6px;padding:10px 14px}
+.fleet-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#3a5a7a;margin-bottom:8px}
+.ship-row{font-size:12px;color:#8aaac8;line-height:1.9}
+.ship-row.sunk-ship{color:#2a4a6a;text-decoration:line-through}
+.btn{display:inline-block;padding:8px 20px;border:1px solid #2a4a6a;border-radius:4px;background:transparent;color:#8aaac8;font-size:12px;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:2px;transition:all 0.15s}
+.btn:hover{background:#0d1826;border-color:#4a7aaa;color:#c8e0f5}
+.turn-badge{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border-radius:4px;font-family:'Courier New',monospace}
+.turn-us{background:#0d2a1a;color:#4aaa6a;border:1px solid #1a4a2a}
+.turn-jp{background:#2a0d0d;color:#aa4a4a;border:1px solid #4a1a1a}
+.divider{border:none;border-top:1px solid #1a3a5a;margin:1rem 0}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100}
+#overlay.hidden{display:none}
+.modal{background:#0d1826;border:1px solid #2a4a6a;border-radius:8px;padding:2.5rem;max-width:360px;text-align:center}
+.modal h3{font-size:22px;font-weight:400;color:#e0eaf5;margin-bottom:12px;letter-spacing:1px}
+.modal p{font-size:13px;color:#7a9ab8;margin-bottom:1rem;line-height:1.7}
+.modal .tagline{font-size:10px;letter-spacing:3px;color:#2a4a6a;text-transform:uppercase;margin-bottom:1.5rem}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="overlay">
+    <div class="modal">
+      <div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">June 4–7, 1942 · Pacific Theater</div>
+      <h3>Battle of Midway</h3>
+      <p>US Navy cryptanalysts have cracked Japanese naval codes, revealing a planned attack on Midway Atoll. Three American carriers lie in ambush. Command the Pacific Fleet and sink the Imperial Japanese Navy before they sink you.</p>
+      <div class="tagline">Ships placed randomly · AI hunts after hits</div>
+      <button class="btn" onclick="startGame()">Begin engagement</button>
+    </div>
+  </div>
+
+  <div id="main" style="display:none">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem">
+      <div>
+        <h1>Pacific Theater — June 1942</h1>
+        <h2>Battle of Midway</h2>
+        <div class="subtitle">Naval Command Simulation</div>
+      </div>
+      <span id="turn-badge" class="turn-badge turn-us">Your turn</span>
+    </div>
+
+    <div class="status-bar">
+      <span id="status-icon">📡</span>
+      <span id="status-text">Awaiting your orders, Admiral. Select a target in enemy waters.</span>
+    </div>
+
+    <div class="boards">
+      <div class="board-wrap">
+        <div class="board-label">US Pacific Fleet 🇺🇸</div>
+        <table id="player-board"></table>
+      </div>
+      <div class="board-wrap">
+        <div class="board-label">Imperial Japanese Navy 🇯🇵</div>
+        <table id="enemy-board"></table>
+      </div>
+    </div>
+
+    <div class="ships-remaining">
+      <div class="fleet-panel">
+        <div class="fleet-title">US Fleet status</div>
+        <div id="us-fleet"></div>
+      </div>
+      <div class="fleet-panel">
+        <div class="fleet-title">IJN Fleet status</div>
+        <div id="jp-fleet"></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;letter-spacing:2px;color:#2a4a6a;text-transform:uppercase">Click enemy grid to fire</span>
+      <button class="btn" onclick="resetGame()">New battle</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHIPS=[
+  {name:'USS Yorktown (CV-5)',size:5},
+  {name:'USS Enterprise (CV-6)',size:4},
+  {name:'USS Hornet (CV-8)',size:3},
+  {name:'USS Astoria (CA-34)',size:3},
+  {name:'USS Hammann (DD-412)',size:2},
+];
+const JP_SHIPS=[
+  {name:'IJN Akagi',size:5},
+  {name:'IJN Kaga',size:4},
+  {name:'IJN Sōryū',size:3},
+  {name:'IJN Hiryū',size:3},
+  {name:'IJN Nagara',size:2},
+];
+const SIZE=10;
+const COLS='ABCDEFGHIJ';
+let playerBoard,enemyBoard,playerShips,enemyShips,turn,gameOver,ai;
+
+function emptyGrid(){return Array.from({length:SIZE},()=>Array(SIZE).fill(0));}
+
+function placeShips(shipDefs){
+  const grid=emptyGrid();
+  const placed=[];
+  for(const def of shipDefs){
+    let ok=false,attempts=0;
+    while(!ok&&attempts<1000){
+      attempts++;
+      const horiz=Math.random()<0.5;
+      const r=Math.floor(Math.random()*(SIZE-(horiz?0:def.size)));
+      const c=Math.floor(Math.random()*(SIZE-(horiz?def.size:0)));
+      let clear=true;
+      for(let i=0;i<def.size;i++){
+        const rr=horiz?r:r+i,cc=horiz?c+i:c;
+        if(grid[rr][cc]!==0){clear=false;break;}
+      }
+      if(clear){
+        const cells=[];
+        for(let i=0;i<def.size;i++){
+          const rr=horiz?r:r+i,cc=horiz?c+i:c;
+          grid[rr][cc]=placed.length+1;
+          cells.push([rr,cc]);
+        }
+        placed.push({...def,cells,hits:0,sunk:false});
+        ok=true;
+      }
+    }
+  }
+  return{grid,placed};
+}
+
+function startGame(){
+  document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('main').style.display='block';
+  resetGame();
+}
+
+function resetGame(){
+  const p=placeShips(SHIPS);
+  const e=placeShips(JP_SHIPS);
+  playerBoard=p.grid;playerShips=p.placed;
+  enemyBoard=e.grid;enemyShips=e.placed;
+  turn='player';gameOver=false;
+  ai={mode:'hunt',queue:[],tried:new Set()};
+  renderBoards();
+  setStatus('📡','Awaiting your orders, Admiral. Select a target in enemy waters.');
+  setBadge('player');
+  updateFleets();
+}
+
+function renderBoard(id,grid,isEnemy){
+  const tbl=document.getElementById(id);
+  let html=`<tr><td class="coord-cell"></td>`;
+  for(let c=0;c<SIZE;c++) html+=`<td class="coord-cell">${COLS[c]}</td>`;
+  html+='</tr>';
+  for(let r=0;r<SIZE;r++){
+    html+=`<tr><td class="coord-cell">${r+1}</td>`;
+    for(let c=0;c<SIZE;c++){
+      const v=grid[r][c];
+      let cls='water',content='';
+      if(v==='hit'){cls='ship-hit';content='✕';}
+      else if(v==='sunk'){cls='sunk';content='✕';}
+      else if(v==='miss'){cls='miss';content='·';}
+      else if(!isEnemy&&typeof v==='number'&&v>0){cls='ship-show';}
+      const clickable=isEnemy&&!gameOver&&v===0;
+      if(clickable) cls+=' enemy-target';
+      const onclick=clickable?`onclick="playerFire(${r},${c})"`:'' ;
+      html+=`<td class="${cls.trim()}" ${onclick}>${content}</td>`;
+    }
+    html+='</tr>';
+  }
+  tbl.innerHTML=html;
+}
+
+function renderBoards(){
+  renderBoard('player-board',playerBoard,false);
+  renderBoard('enemy-board',enemyBoard,true);
+}
+
+function setStatus(icon,msg){
+  document.getElementById('status-icon').textContent=icon;
+  document.getElementById('status-text').textContent=msg;
+}
+
+function setBadge(who){
+  const el=document.getElementById('turn-badge');
+  if(who==='player'){el.className='turn-badge turn-us';el.textContent='Your turn';}
+  else{el.className='turn-badge turn-jp';el.textContent='IJN firing...';}
+}
+
+function registerHit(ships,grid,r,c){
+  const idx=grid[r][c]-1;
+  const ship=ships[idx];
+  ship.hits++;
+  if(ship.hits>=ship.size){
+    ship.sunk=true;
+    ship.cells.forEach(([rr,cc])=>{grid[rr][cc]='sunk';});
+    return{sunk:true,ship};
+  }
+  grid[r][c]='hit';
+  return{sunk:false,ship};
+}
+
+function updateFleets(){
+  document.getElementById('us-fleet').innerHTML=playerShips.map(s=>`<div class="ship-row${s.sunk?' sunk-ship':''}">${s.sunk?'☠ ':'▸ '}${s.name}</div>`).join('');
+  document.getElementById('jp-fleet').innerHTML=enemyShips.map(s=>`<div class="ship-row${s.sunk?' sunk-ship':''}">${s.sunk?'☠ ':'▸ '}${s.name}</div>`).join('');
+}
+
+function allSunk(ships){return ships.every(s=>s.sunk);}
+
+function endGame(winner){
+  gameOver=true;
+  renderBoards();
+  const usWon=winner==='player';
+  const overlay=document.getElementById('overlay');
+  overlay.querySelector('.modal').innerHTML=`
+    <div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">After action report</div>
+    <h3>${usWon?'Victory at Midway':'The IJN prevails'}</h3>
+    <p>${usWon
+      ?'All four Japanese carriers — Akagi, Kaga, Sōryū, and Hiryū — have been sunk. A decisive turning point in the Pacific War. History remembers this engagement.'
+      :'The Imperial Japanese Navy has neutralized the Pacific Fleet. Midway Atoll falls. A dark chapter for the United States Navy.'}</p>
+    <button class="btn" onclick="document.getElementById('overlay').classList.add('hidden');resetGame()">Fight again</button>
+  `;
+  overlay.classList.remove('hidden');
+}
+
+function playerFire(r,c){
+  if(turn!=='player'||gameOver) return;
+  const v=enemyBoard[r][c];
+  if(v==='hit'||v==='miss'||v==='sunk') return;
+  if(typeof v==='number'&&v>0){
+    const{sunk,ship}=registerHit(enemyShips,enemyBoard,r,c);
+    if(sunk) setStatus('💥',`${ship.name} sunk! The Imperial fleet takes a decisive blow, Admiral.`);
+    else setStatus('🎯',`Hit! Enemy vessel struck at ${COLS[c]}${r+1}. Fire again.`);
+    if(allSunk(enemyShips)){endGame('player');return;}
+  } else {
+    enemyBoard[r][c]='miss';
+    setStatus('🌊',`Miss at ${COLS[c]}${r+1}. Shells fall into the Pacific.`);
+  }
+  updateFleets();
+  renderBoards();
+  turn='ai';
+  setBadge('ai');
+  setTimeout(aiFire,850);
+}
+
+function aiFire(){
+  if(gameOver) return;
+  let r,c,found=false;
+
+  if(ai.mode==='destroy'&&ai.queue.length>0){
+    while(ai.queue.length>0){
+      const[pr,pc]=ai.queue.shift();
+      if(pr>=0&&pr<SIZE&&pc>=0&&pc<SIZE&&!ai.tried.has(pr+','+pc)){
+        r=pr;c=pc;found=true;break;
+      }
+    }
+    if(!found) ai.mode='hunt';
+  }
+
+  if(!found){
+    ai.mode='hunt';
+    let attempts=0;
+    do{
+      r=Math.floor(Math.random()*SIZE);
+      c=Math.floor(Math.random()*SIZE);
+      attempts++;
+    }while(ai.tried.has(r+','+c)&&attempts<200);
+  }
+
+  ai.tried.add(r+','+c);
+  const v=playerBoard[r][c];
+
+  if(typeof v==='number'&&v>0){
+    const{sunk,ship}=registerHit(playerShips,playerBoard,r,c);
+    if(sunk){
+      ai.mode='hunt';ai.queue=[];
+      setStatus('💀',`${ship.name} has been sunk by the IJN! Return fire, Admiral.`);
+    } else {
+      ai.mode='destroy';
+      [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc])=>{
+        const nr=r+dr,nc=c+dc;
+        if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&!ai.tried.has(nr+','+nc)){
+          ai.queue.push([nr,nc]);
+        }
+      });
+      setStatus('⚠️',`IJN hit at ${COLS[c]}${r+1}! Your vessel is taking damage.`);
+    }
+    if(allSunk(playerShips)){endGame('ai');return;}
+  } else {
+    if(v===0) playerBoard[r][c]='miss';
+    setStatus('😮‍💨',`IJN miss at ${COLS[c]}${r+1}. Your fleet holds. Return fire, Admiral.`);
+  }
+
+  updateFleets();
+  renderBoards();
+  turn='player';
+  setBadge('player');
+}
+</script>
+</body>
+</html>
