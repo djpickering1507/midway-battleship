@@ -186,7 +186,7 @@ function renderBoard(id,grid,isEnemy){
       else if(v==='sunk'){cls='sunk';content='✕';}
       else if(v==='miss'){cls='miss';content='·';}
       else if(!isEnemy&&typeof v==='number'&&v>0){cls='ship-show';}
-      const clickable=isEnemy&&!gameOver&&v===0;
+      const clickable=isEnemy&&!gameOver&&v!=='hit'&&v!=='miss'&&v!=='sunk';
       if(clickable) cls+=' enemy-target';
       const onclick=clickable?`onclick="playerFire(${r},${c})"`:'' ;
       html+=`<td class="${cls.trim()}" ${onclick}>${content}</td>`;
