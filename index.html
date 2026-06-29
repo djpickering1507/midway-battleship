@@ -332,34 +332,44 @@ function emptyGrid() {
 }
 
 function placeShips(defs) {
-  const grid = emptyGrid();
-  const ships = [];
-  for (const def of defs) {
-    let placed = false;
-    for (let attempt = 0; attempt < 2000 && !placed; attempt++) {
-      const horiz = Math.random() < 0.5;
-      const r = Math.floor(Math.random() * (horiz ? GRID : GRID - def.size));
-      const c = Math.floor(Math.random() * (horiz ? GRID - def.size : GRID));
-      let clear = true;
-      for (let i = 0; i < def.size && clear; i++) {
-        const rr = horiz ? r : r + i;
-        const cc = horiz ? c + i : c;
-        if (grid[rr][cc] !== 0) clear = false;
-      }
-      if (clear) {
-        const cells = [];
-        for (let i = 0; i < def.size; i++) {
+  const MAX_RETRIES = 5;
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
+    const grid = emptyGrid();
+    const ships = [];
+    let allPlaced = true;
+    for (const def of defs) {
+      let placed = false;
+      for (let attempt = 0; attempt < 2000 && !placed; attempt++) {
+        const horiz = Math.random() < 0.5;
+        const r = Math.floor(Math.random() * (horiz ? GRID : GRID - def.size));
+        const c = Math.floor(Math.random() * (horiz ? GRID - def.size : GRID));
+        let clear = true;
+        for (let i = 0; i < def.size && clear; i++) {
           const rr = horiz ? r : r + i;
           const cc = horiz ? c + i : c;
-          grid[rr][cc] = ships.length + 1;
-          cells.push([rr, cc]);
+          if (rr >= GRID || cc >= GRID || grid[rr][cc] !== 0) clear = false;
         }
-        ships.push({ ...def, cells, hits: 0, sunk: false, horiz });
-        placed = true;
+        if (clear) {
+          const cells = [];
+          for (let i = 0; i < def.size; i++) {
+            const rr = horiz ? r : r + i;
+            const cc = horiz ? c + i : c;
+            grid[rr][cc] = ships.length + 1;
+            cells.push([rr, cc]);
+          }
+          ships.push({ ...def, cells, hits: 0, sunk: false, horiz });
+          placed = true;
+        }
+      }
+      if (!placed) {
+        console.warn('Ship placement failed for "' + def.name + '" after 2000 attempts (retry ' + (retry + 1) + '/' + MAX_RETRIES + ')');
+        allPlaced = false;
+        break;
       }
     }
+    if (allPlaced) return { grid, ships };
   }
-  return { grid, ships };
+  throw new Error('Failed to place all ships after maximum retries. Grid may be too small for the fleet.');
 }
 
 /* ===== GAME INIT ===== */
@@ -370,25 +380,30 @@ function startGame() {
 }
 
 function resetGame() {
-  const p = placeShips(US_SHIPS);
-  const e = placeShips(JP_SHIPS);
-  playerGrid = p.grid; playerShips = p.ships;
-  enemyGrid = e.grid;  enemyShips = e.ships;
-  turn = 'player'; gameOver = false;
-  playerShotCount = 0; aiShotCount = 0;
-  combatLog = [];
-  ai = {
-    mode: 'hunt',
-    targets: [],
-    hits: [],
-    tried: new Set()
-  };
-  renderBoards();
-  setStatus('\u{1F4E1}', 'Awaiting your orders, Admiral. Select a target in enemy waters.');
-  setBadge('player');
-  updateFleets();
-  updateShotCounts();
-  renderLog();
+  try {
+    const p = placeShips(US_SHIPS);
+    const e = placeShips(JP_SHIPS);
+    playerGrid = p.grid; playerShips = p.ships;
+    enemyGrid = e.grid;  enemyShips = e.ships;
+    turn = 'player'; gameOver = false;
+    playerShotCount = 0; aiShotCount = 0;
+    combatLog = [];
+    ai = {
+      mode: 'hunt',
+      targets: [],
+      hits: [],
+      tried: new Set()
+    };
+    renderBoards();
+    setStatus('\u{1F4E1}', 'Awaiting your orders, Admiral. Select a target in enemy waters.');
+    setBadge('player');
+    updateFleets();
+    updateShotCounts();
+    renderLog();
+  } catch (err) {
+    console.error('resetGame failed:', err);
+    setStatus('\u26A0\uFE0F', 'Fleet deployment error \u2014 please try "New battle" again.');
+  }
 }
 
 /* ===== RENDERING ===== */
@@ -490,16 +505,25 @@ function renderLog() {
 
 /* ===== HIT REGISTRATION ===== */
 function registerHit(ships, grid, r, c) {
-  const idx = grid[r][c] - 1;
+  const cellVal = grid[r][c];
+  if (typeof cellVal !== 'number' || cellVal <= 0 || cellVal > ships.length) {
+    console.error('registerHit: invalid cell value ' + cellVal + ' at (' + r + ',' + c + ')');
+    return { sunk: false, ship: null, error: true };
+  }
+  const idx = cellVal - 1;
   const ship = ships[idx];
+  if (!ship) {
+    console.error('registerHit: no ship found at index ' + idx);
+    return { sunk: false, ship: null, error: true };
+  }
   ship.hits++;
   if (ship.hits >= ship.size) {
     ship.sunk = true;
     ship.cells.forEach(([rr, cc]) => { grid[rr][cc] = 'sunk'; });
-    return { sunk: true, ship };
+    return { sunk: true, ship, error: false };
   }
   grid[r][c] = 'hit';
-  return { sunk: false, ship };
+  return { sunk: false, ship, error: false };
 }
 
 function allSunk(ships) { return ships.every(s => s.sunk); }
@@ -533,18 +557,27 @@ function endGame(winner) {
 /* ===== PLAYER FIRE ===== */
 function playerFire(r, c) {
   if (turn !== 'player' || gameOver) return;
+  if (r < 0 || r >= GRID || c < 0 || c >= GRID) {
+    console.error('playerFire: coordinates out of bounds (' + r + ',' + c + ')');
+    return;
+  }
   const v = enemyGrid[r][c];
   if (v === 'hit' || v === 'miss' || v === 'sunk') return;
 
   playerShotCount++;
 
   if (typeof v === 'number' && v > 0) {
-    const { sunk, ship } = registerHit(enemyShips, enemyGrid, r, c);
+    const result = registerHit(enemyShips, enemyGrid, r, c);
+    if (result.error) {
+      playerShotCount--;
+      setStatus('\u26A0\uFE0F', 'Targeting error \u2014 please select another cell.');
+      return;
+    }
     renderBoards();
-    animateCell('enemy-board', r, c, sunk ? 'just-sunk' : 'just-hit');
-    if (sunk) {
-      setStatus('\u{1F4A5}', ship.name + ' sunk! The Imperial fleet takes a decisive blow, Admiral.');
-      addLog('You sank ' + ship.name + '!', 'sunk');
+    animateCell('enemy-board', r, c, result.sunk ? 'just-sunk' : 'just-hit');
+    if (result.sunk) {
+      setStatus('\u{1F4A5}', result.ship.name + ' sunk! The Imperial fleet takes a decisive blow, Admiral.');
+      addLog('You sank ' + result.ship.name + '!', 'sunk');
     } else {
       setStatus('\u{1F3AF}', 'Hit at ' + cellRef(r, c) + '! Enemy vessel struck.');
       addLog('Hit at ' + cellRef(r, c), 'hit');
@@ -684,14 +717,19 @@ function aiFire() {
   const v = playerGrid[r][c];
 
   if (typeof v === 'number' && v > 0) {
-    const { sunk, ship } = registerHit(playerShips, playerGrid, r, c);
+    const result = registerHit(playerShips, playerGrid, r, c);
+    if (result.error) {
+      console.error('aiFire: registerHit failed at (' + r + ',' + c + ')');
+      turn = 'player'; setBadge('player');
+      return;
+    }
     renderBoards();
-    animateCell('player-board', r, c, sunk ? 'just-sunk' : 'just-hit');
+    animateCell('player-board', r, c, result.sunk ? 'just-sunk' : 'just-hit');
 
-    if (sunk) {
-      aiClearSunkShipTargets(ship);
-      setStatus('\u{1F480}', ship.name + ' has been sunk by the IJN!');
-      addLog('IJN sank ' + ship.name + '!', 'sunk');
+    if (result.sunk) {
+      aiClearSunkShipTargets(result.ship);
+      setStatus('\u{1F480}', result.ship.name + ' has been sunk by the IJN!');
+      addLog('IJN sank ' + result.ship.name + '!', 'sunk');
     } else {
       ai.mode = 'target';
       ai.hits.push([r, c]);
@@ -714,6 +752,12 @@ function aiFire() {
   turn = 'player';
   setBadge('player');
 }
+window.addEventListener('error', function(event) {
+  console.error('Uncaught error:', event.error || event.message);
+});
+window.addEventListener('unhandledrejection', function(event) {
+  console.error('Unhandled promise rejection:', event.reason);
+});
 </script>
 </body>
 </html>
