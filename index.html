@@ -10,57 +10,82 @@ body{font-family:'Courier New',monospace;background:#0a0f1a;color:#c8d8e8;min-he
 h1{font-size:13px;font-weight:400;letter-spacing:4px;text-transform:uppercase;color:#5a7a9a;margin-bottom:2px}
 h2{font-size:24px;font-weight:400;color:#e0eaf5;margin-bottom:4px;letter-spacing:1px}
 .subtitle{font-size:11px;letter-spacing:3px;color:#3a5a7a;text-transform:uppercase;margin-bottom:1.5rem}
-#game{max-width:740px;margin:0 auto}
+#game{max-width:780px;margin:0 auto}
 .boards{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem}
+@media(max-width:600px){.boards{grid-template-columns:1fr;gap:1rem}}
 .board-wrap{display:flex;flex-direction:column;gap:6px}
-.board-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7a9ab8;font-weight:400}
+.board-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7a9ab8;font-weight:400;display:flex;align-items:center;justify-content:space-between}
+.board-label .shot-count{font-size:10px;color:#3a5a7a;letter-spacing:1px}
 table{border-collapse:collapse;width:100%}
-td{width:10%;aspect-ratio:1;border:1px solid #1a2f4a;cursor:default;text-align:center;font-size:11px;transition:background 0.12s}
+td{width:calc(100%/11);aspect-ratio:1;border:1px solid #1a2f4a;cursor:default;text-align:center;font-size:11px;transition:background 0.15s,border-color 0.15s,transform 0.1s;position:relative}
 td.water{background:#0d1826}
 td.ship-hit{background:#8b1a1a;color:#ffaaaa;font-size:13px}
 td.miss{background:#0f1e2e;color:#2a4a6a;font-size:12px}
 td.ship-show{background:#1a3a5a;border-color:#2a5a8a}
 td.sunk{background:#5c0f0f;color:#ff8888;font-size:13px}
-td.enemy-target:hover{background:#2a4a1a;cursor:crosshair;border-color:#4a8a2a}
+td.enemy-target:hover{background:#1a3a1a;cursor:crosshair;border-color:#4a8a2a;transform:scale(1.08);z-index:2}
+td.just-hit{animation:hitFlash 0.5s ease-out}
+td.just-miss{animation:missRipple 0.4s ease-out}
+td.just-sunk{animation:sunkPulse 0.6s ease-out}
+@keyframes hitFlash{0%{background:#ff4444;transform:scale(1.2)}100%{background:#8b1a1a;transform:scale(1)}}
+@keyframes missRipple{0%{background:#1a3a5a;transform:scale(1.15)}100%{background:#0f1e2e;transform:scale(1)}}
+@keyframes sunkPulse{0%{background:#ff2222;transform:scale(1.25)}50%{background:#aa0000}100%{background:#5c0f0f;transform:scale(1)}}
 .coord-cell{background:transparent!important;border:none!important;color:#2a4a6a;font-size:9px;letter-spacing:1px;cursor:default!important;width:18px}
 .status-bar{background:#0d1826;border:1px solid #1a3a5a;border-radius:6px;padding:12px 16px;margin-bottom:1rem;min-height:50px;display:flex;align-items:center;gap:12px}
 .status-icon{font-size:20px;flex-shrink:0}
 .status-text{font-size:13px;color:#b0c8e0;line-height:1.5}
 .ships-remaining{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+@media(max-width:600px){.ships-remaining{grid-template-columns:1fr;gap:0.5rem}}
 .fleet-panel{background:#0d1826;border:1px solid #1a3a5a;border-radius:6px;padding:10px 14px}
 .fleet-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#3a5a7a;margin-bottom:8px}
-.ship-row{font-size:12px;color:#8aaac8;line-height:1.9}
+.ship-row{font-size:12px;color:#8aaac8;line-height:1.9;display:flex;align-items:center;gap:6px;transition:color 0.3s}
+.ship-row .ship-pips{display:inline-flex;gap:2px}
+.ship-row .pip{display:inline-block;width:8px;height:8px;border-radius:2px;background:#1a3a5a;border:1px solid #2a5a8a;transition:background 0.3s,border-color 0.3s}
+.ship-row .pip.pip-hit{background:#8b1a1a;border-color:#aa3a3a}
 .ship-row.sunk-ship{color:#2a4a6a;text-decoration:line-through}
+.ship-row.sunk-ship .pip{background:#3a1515;border-color:#4a2a2a}
 .btn{display:inline-block;padding:8px 20px;border:1px solid #2a4a6a;border-radius:4px;background:transparent;color:#8aaac8;font-size:12px;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:2px;transition:all 0.15s}
 .btn:hover{background:#0d1826;border-color:#4a7aaa;color:#c8e0f5}
-.turn-badge{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border-radius:4px;font-family:'Courier New',monospace}
+.turn-badge{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border-radius:4px;font-family:'Courier New',monospace;transition:all 0.3s}
 .turn-us{background:#0d2a1a;color:#4aaa6a;border:1px solid #1a4a2a}
 .turn-jp{background:#2a0d0d;color:#aa4a4a;border:1px solid #4a1a1a}
+.turn-over{background:#1a1a2a;color:#6a6a8a;border:1px solid #2a2a4a}
 .divider{border:none;border-top:1px solid #1a3a5a;margin:1rem 0}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100}
-#overlay.hidden{display:none}
-.modal{background:#0d1826;border:1px solid #2a4a6a;border-radius:8px;padding:2.5rem;max-width:360px;text-align:center}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100;transition:opacity 0.4s}
+#overlay.hidden{opacity:0;pointer-events:none}
+.modal{background:#0d1826;border:1px solid #2a4a6a;border-radius:8px;padding:2.5rem;max-width:400px;text-align:center;animation:modalIn 0.4s ease-out}
+@keyframes modalIn{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
 .modal h3{font-size:22px;font-weight:400;color:#e0eaf5;margin-bottom:12px;letter-spacing:1px}
 .modal p{font-size:13px;color:#7a9ab8;margin-bottom:1rem;line-height:1.7}
 .modal .tagline{font-size:10px;letter-spacing:3px;color:#2a4a6a;text-transform:uppercase;margin-bottom:1.5rem}
+.modal .stats{font-size:12px;color:#5a8aaa;margin-bottom:1.5rem;line-height:2}
+.log-panel{background:#0d1826;border:1px solid #1a3a5a;border-radius:6px;padding:10px 14px;margin-bottom:1rem;max-height:80px;overflow-y:auto}
+.log-panel::-webkit-scrollbar{width:4px}
+.log-panel::-webkit-scrollbar-track{background:#0a0f1a}
+.log-panel::-webkit-scrollbar-thumb{background:#1a3a5a;border-radius:2px}
+.log-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#3a5a7a;margin-bottom:6px}
+.log-entry{font-size:11px;color:#5a7a9a;line-height:1.7}
+.log-entry.log-hit{color:#aa6a6a}
+.log-entry.log-sunk{color:#cc5555;font-weight:bold}
+.log-entry.log-miss{color:#3a5a7a}
 </style>
 </head>
 <body>
 <div id="game">
   <div id="overlay">
     <div class="modal">
-      <div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">June 4–7, 1942 · Pacific Theater</div>
+      <div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">June 4-7, 1942 &middot; Pacific Theater</div>
       <h3>Battle of Midway</h3>
       <p>US Navy cryptanalysts have cracked Japanese naval codes, revealing a planned attack on Midway Atoll. Three American carriers lie in ambush. Command the Pacific Fleet and sink the Imperial Japanese Navy before they sink you.</p>
-      <div class="tagline">Ships placed randomly · AI hunts after hits</div>
+      <div class="tagline">Ships placed randomly &middot; AI hunts after hits</div>
       <button class="btn" onclick="startGame()">Begin engagement</button>
     </div>
   </div>
 
   <div id="main" style="display:none">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
       <div>
-        <h1>Pacific Theater — June 1942</h1>
+        <h1>Pacific Theater &mdash; June 1942</h1>
         <h2>Battle of Midway</h2>
         <div class="subtitle">Naval Command Simulation</div>
       </div>
@@ -68,17 +93,23 @@ td.enemy-target:hover{background:#2a4a1a;cursor:crosshair;border-color:#4a8a2a}
     </div>
 
     <div class="status-bar">
-      <span id="status-icon">📡</span>
-      <span id="status-text">Awaiting your orders, Admiral. Select a target in enemy waters.</span>
+      <span id="status-icon" class="status-icon">&#x1F4E1;</span>
+      <span id="status-text" class="status-text">Awaiting your orders, Admiral. Select a target in enemy waters.</span>
     </div>
 
     <div class="boards">
       <div class="board-wrap">
-        <div class="board-label">US Pacific Fleet 🇺🇸</div>
+        <div class="board-label">
+          <span>US Pacific Fleet &#x1F1FA;&#x1F1F8;</span>
+          <span class="shot-count" id="us-shots">Shots: 0</span>
+        </div>
         <table id="player-board"></table>
       </div>
       <div class="board-wrap">
-        <div class="board-label">Imperial Japanese Navy 🇯🇵</div>
+        <div class="board-label">
+          <span>Imperial Japanese Navy &#x1F1EF;&#x1F1F5;</span>
+          <span class="shot-count" id="jp-shots">Shots: 0</span>
+        </div>
         <table id="enemy-board"></table>
       </div>
     </div>
@@ -94,8 +125,13 @@ td.enemy-target:hover{background:#2a4a1a;cursor:crosshair;border-color:#4a8a2a}
       </div>
     </div>
 
+    <div class="log-panel">
+      <div class="log-title">Combat log</div>
+      <div id="combat-log"></div>
+    </div>
+
     <hr class="divider">
-    <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span style="font-size:10px;letter-spacing:2px;color:#2a4a6a;text-transform:uppercase">Click enemy grid to fire</span>
       <button class="btn" onclick="resetGame()">New battle</button>
     </div>
@@ -103,222 +139,415 @@ td.enemy-target:hover{background:#2a4a1a;cursor:crosshair;border-color:#4a8a2a}
 </div>
 
 <script>
-const SHIPS=[
-  {name:'USS Yorktown (CV-5)',size:5},
-  {name:'USS Enterprise (CV-6)',size:4},
-  {name:'USS Hornet (CV-8)',size:3},
-  {name:'USS Astoria (CA-34)',size:3},
-  {name:'USS Hammann (DD-412)',size:2},
+/* ===== SHIP DEFINITIONS — historically accurate for Midway ===== */
+const US_SHIPS = [
+  { name: 'USS Yorktown (CV-5)',    size: 5, type: 'Carrier' },
+  { name: 'USS Enterprise (CV-6)',  size: 4, type: 'Carrier' },
+  { name: 'USS Hornet (CV-8)',      size: 3, type: 'Carrier' },
+  { name: 'USS Astoria (CA-34)',    size: 3, type: 'Cruiser' },
+  { name: 'USS Hammann (DD-412)',   size: 2, type: 'Destroyer' },
 ];
-const JP_SHIPS=[
-  {name:'IJN Akagi',size:5},
-  {name:'IJN Kaga',size:4},
-  {name:'IJN Sōryū',size:3},
-  {name:'IJN Hiryū',size:3},
-  {name:'IJN Nagara',size:2},
+const JP_SHIPS = [
+  { name: 'IJN Akagi',   size: 5, type: 'Carrier' },
+  { name: 'IJN Kaga',    size: 4, type: 'Carrier' },
+  { name: 'IJN S\u014dry\u016b',  size: 3, type: 'Carrier' },
+  { name: 'IJN Hiry\u016b',  size: 3, type: 'Carrier' },
+  { name: 'IJN Nagara',  size: 2, type: 'Cruiser' },
 ];
-const SIZE=10;
-const COLS='ABCDEFGHIJ';
-let playerBoard,enemyBoard,playerShips,enemyShips,turn,gameOver,ai;
 
-function emptyGrid(){return Array.from({length:SIZE},()=>Array(SIZE).fill(0));}
+const GRID = 10;
+const COLS = 'ABCDEFGHIJ';
 
-function placeShips(shipDefs){
-  const grid=emptyGrid();
-  const placed=[];
-  for(const def of shipDefs){
-    let ok=false,attempts=0;
-    while(!ok&&attempts<1000){
-      attempts++;
-      const horiz=Math.random()<0.5;
-      const r=Math.floor(Math.random()*(SIZE-(horiz?0:def.size)));
-      const c=Math.floor(Math.random()*(SIZE-(horiz?def.size:0)));
-      let clear=true;
-      for(let i=0;i<def.size;i++){
-        const rr=horiz?r:r+i,cc=horiz?c+i:c;
-        if(grid[rr][cc]!==0){clear=false;break;}
+let playerGrid, enemyGrid, playerShips, enemyShips;
+let turn, gameOver, playerShotCount, aiShotCount, combatLog;
+let ai;
+
+/* ===== GRID & PLACEMENT ===== */
+function emptyGrid() {
+  return Array.from({ length: GRID }, () => Array(GRID).fill(0));
+}
+
+function placeShips(defs) {
+  const grid = emptyGrid();
+  const ships = [];
+  for (const def of defs) {
+    let placed = false;
+    for (let attempt = 0; attempt < 2000 && !placed; attempt++) {
+      const horiz = Math.random() < 0.5;
+      const r = Math.floor(Math.random() * (horiz ? GRID : GRID - def.size));
+      const c = Math.floor(Math.random() * (horiz ? GRID - def.size : GRID));
+      let clear = true;
+      for (let i = 0; i < def.size && clear; i++) {
+        const rr = horiz ? r : r + i;
+        const cc = horiz ? c + i : c;
+        if (grid[rr][cc] !== 0) clear = false;
       }
-      if(clear){
-        const cells=[];
-        for(let i=0;i<def.size;i++){
-          const rr=horiz?r:r+i,cc=horiz?c+i:c;
-          grid[rr][cc]=placed.length+1;
-          cells.push([rr,cc]);
+      if (clear) {
+        const cells = [];
+        for (let i = 0; i < def.size; i++) {
+          const rr = horiz ? r : r + i;
+          const cc = horiz ? c + i : c;
+          grid[rr][cc] = ships.length + 1;
+          cells.push([rr, cc]);
         }
-        placed.push({...def,cells,hits:0,sunk:false});
-        ok=true;
+        ships.push({ ...def, cells, hits: 0, sunk: false, horiz });
+        placed = true;
       }
     }
   }
-  return{grid,placed};
+  return { grid, ships };
 }
 
-function startGame(){
+/* ===== GAME INIT ===== */
+function startGame() {
   document.getElementById('overlay').classList.add('hidden');
-  document.getElementById('main').style.display='block';
+  document.getElementById('main').style.display = 'block';
   resetGame();
 }
 
-function resetGame(){
-  const p=placeShips(SHIPS);
-  const e=placeShips(JP_SHIPS);
-  playerBoard=p.grid;playerShips=p.placed;
-  enemyBoard=e.grid;enemyShips=e.placed;
-  turn='player';gameOver=false;
-  ai={mode:'hunt',queue:[],tried:new Set()};
+function resetGame() {
+  const p = placeShips(US_SHIPS);
+  const e = placeShips(JP_SHIPS);
+  playerGrid = p.grid; playerShips = p.ships;
+  enemyGrid = e.grid;  enemyShips = e.ships;
+  turn = 'player'; gameOver = false;
+  playerShotCount = 0; aiShotCount = 0;
+  combatLog = [];
+  ai = {
+    mode: 'hunt',
+    targets: [],
+    hits: [],
+    tried: new Set()
+  };
   renderBoards();
-  setStatus('📡','Awaiting your orders, Admiral. Select a target in enemy waters.');
+  setStatus('\u{1F4E1}', 'Awaiting your orders, Admiral. Select a target in enemy waters.');
   setBadge('player');
   updateFleets();
+  updateShotCounts();
+  renderLog();
 }
 
-function renderBoard(id,grid,isEnemy){
-  const tbl=document.getElementById(id);
-  let html=`<tr><td class="coord-cell"></td>`;
-  for(let c=0;c<SIZE;c++) html+=`<td class="coord-cell">${COLS[c]}</td>`;
-  html+='</tr>';
-  for(let r=0;r<SIZE;r++){
-    html+=`<tr><td class="coord-cell">${r+1}</td>`;
-    for(let c=0;c<SIZE;c++){
-      const v=grid[r][c];
-      let cls='water',content='';
-      if(v==='hit'){cls='ship-hit';content='✕';}
-      else if(v==='sunk'){cls='sunk';content='✕';}
-      else if(v==='miss'){cls='miss';content='·';}
-      else if(!isEnemy&&typeof v==='number'&&v>0){cls='ship-show';}
-      const clickable=isEnemy&&!gameOver&&v!=='hit'&&v!=='miss'&&v!=='sunk';
-      if(clickable) cls+=' enemy-target';
-      const onclick=clickable?`onclick="playerFire(${r},${c})"`:'' ;
-      html+=`<td class="${cls.trim()}" ${onclick}>${content}</td>`;
+/* ===== RENDERING ===== */
+function cellRef(r, c) { return COLS[c] + (r + 1); }
+
+function renderBoard(id, grid, isEnemy) {
+  const tbl = document.getElementById(id);
+  let html = '<tr><td class="coord-cell"></td>';
+  for (let c = 0; c < GRID; c++) html += '<td class="coord-cell">' + COLS[c] + '</td>';
+  html += '</tr>';
+  for (let r = 0; r < GRID; r++) {
+    html += '<tr><td class="coord-cell">' + (r + 1) + '</td>';
+    for (let c = 0; c < GRID; c++) {
+      const v = grid[r][c];
+      let cls = 'water', content = '', anim = '';
+      if (v === 'hit')       { cls = 'ship-hit'; content = '\u2715'; }
+      else if (v === 'sunk') { cls = 'sunk';     content = '\u2715'; }
+      else if (v === 'miss') { cls = 'miss';     content = '\u00B7'; }
+      else if (!isEnemy && typeof v === 'number' && v > 0) { cls = 'ship-show'; }
+      const clickable = isEnemy && !gameOver && v !== 'hit' && v !== 'miss' && v !== 'sunk';
+      if (clickable) cls += ' enemy-target';
+      const onclick = clickable ? ' onclick="playerFire(' + r + ',' + c + ')"' : '';
+      html += '<td class="' + cls + '"' + onclick + '>' + content + '</td>';
     }
-    html+='</tr>';
+    html += '</tr>';
   }
-  tbl.innerHTML=html;
+  tbl.innerHTML = html;
 }
 
-function renderBoards(){
-  renderBoard('player-board',playerBoard,false);
-  renderBoard('enemy-board',enemyBoard,true);
+function renderBoards() {
+  renderBoard('player-board', playerGrid, false);
+  renderBoard('enemy-board', enemyGrid, true);
 }
 
-function setStatus(icon,msg){
-  document.getElementById('status-icon').textContent=icon;
-  document.getElementById('status-text').textContent=msg;
+function animateCell(boardId, r, c, animClass) {
+  const tbl = document.getElementById(boardId);
+  if (!tbl) return;
+  const row = tbl.rows[r + 1];
+  if (!row) return;
+  const cell = row.cells[c + 1];
+  if (!cell) return;
+  cell.classList.add(animClass);
+  setTimeout(() => cell.classList.remove(animClass), 600);
 }
 
-function setBadge(who){
-  const el=document.getElementById('turn-badge');
-  if(who==='player'){el.className='turn-badge turn-us';el.textContent='Your turn';}
-  else{el.className='turn-badge turn-jp';el.textContent='IJN firing...';}
+function setStatus(icon, msg) {
+  document.getElementById('status-icon').textContent = icon;
+  document.getElementById('status-text').textContent = msg;
 }
 
-function registerHit(ships,grid,r,c){
-  const idx=grid[r][c]-1;
-  const ship=ships[idx];
+function setBadge(who) {
+  const el = document.getElementById('turn-badge');
+  if (who === 'player') {
+    el.className = 'turn-badge turn-us'; el.textContent = 'Your turn';
+  } else if (who === 'ai') {
+    el.className = 'turn-badge turn-jp'; el.textContent = 'IJN firing...';
+  } else {
+    el.className = 'turn-badge turn-over'; el.textContent = 'Battle over';
+  }
+}
+
+function updateShotCounts() {
+  document.getElementById('jp-shots').textContent = 'Shots: ' + playerShotCount;
+  document.getElementById('us-shots').textContent = 'Shots: ' + aiShotCount;
+}
+
+function updateFleets() {
+  document.getElementById('us-fleet').innerHTML = playerShips.map(s => {
+    const pips = Array.from({ length: s.size }, (_, i) =>
+      '<span class="pip' + (i < s.hits ? ' pip-hit' : '') + '"></span>'
+    ).join('');
+    return '<div class="ship-row' + (s.sunk ? ' sunk-ship' : '') + '">' +
+      '<span class="ship-pips">' + pips + '</span> ' +
+      (s.sunk ? '\u2620 ' : '\u25B8 ') + s.name + '</div>';
+  }).join('');
+
+  document.getElementById('jp-fleet').innerHTML = enemyShips.map(s => {
+    const pips = Array.from({ length: s.size }, (_, i) =>
+      '<span class="pip' + (i < s.hits ? ' pip-hit' : '') + '"></span>'
+    ).join('');
+    return '<div class="ship-row' + (s.sunk ? ' sunk-ship' : '') + '">' +
+      '<span class="ship-pips">' + pips + '</span> ' +
+      (s.sunk ? '\u2620 ' : '\u25B8 ') + s.name + '</div>';
+  }).join('');
+}
+
+function addLog(msg, type) {
+  combatLog.unshift({ msg, type });
+  if (combatLog.length > 30) combatLog.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('combat-log');
+  el.innerHTML = combatLog.map(e =>
+    '<div class="log-entry log-' + e.type + '">' + e.msg + '</div>'
+  ).join('');
+}
+
+/* ===== HIT REGISTRATION ===== */
+function registerHit(ships, grid, r, c) {
+  const idx = grid[r][c] - 1;
+  const ship = ships[idx];
   ship.hits++;
-  if(ship.hits>=ship.size){
-    ship.sunk=true;
-    ship.cells.forEach(([rr,cc])=>{grid[rr][cc]='sunk';});
-    return{sunk:true,ship};
+  if (ship.hits >= ship.size) {
+    ship.sunk = true;
+    ship.cells.forEach(([rr, cc]) => { grid[rr][cc] = 'sunk'; });
+    return { sunk: true, ship };
   }
-  grid[r][c]='hit';
-  return{sunk:false,ship};
+  grid[r][c] = 'hit';
+  return { sunk: false, ship };
 }
 
-function updateFleets(){
-  document.getElementById('us-fleet').innerHTML=playerShips.map(s=>`<div class="ship-row${s.sunk?' sunk-ship':''}">${s.sunk?'☠ ':'▸ '}${s.name}</div>`).join('');
-  document.getElementById('jp-fleet').innerHTML=enemyShips.map(s=>`<div class="ship-row${s.sunk?' sunk-ship':''}">${s.sunk?'☠ ':'▸ '}${s.name}</div>`).join('');
-}
+function allSunk(ships) { return ships.every(s => s.sunk); }
 
-function allSunk(ships){return ships.every(s=>s.sunk);}
-
-function endGame(winner){
-  gameOver=true;
+/* ===== END GAME ===== */
+function endGame(winner) {
+  gameOver = true;
   renderBoards();
-  const usWon=winner==='player';
-  const overlay=document.getElementById('overlay');
-  overlay.querySelector('.modal').innerHTML=`
-    <div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">After action report</div>
-    <h3>${usWon?'Victory at Midway':'The IJN prevails'}</h3>
-    <p>${usWon
-      ?'All four Japanese carriers — Akagi, Kaga, Sōryū, and Hiryū — have been sunk. A decisive turning point in the Pacific War. History remembers this engagement.'
-      :'The Imperial Japanese Navy has neutralized the Pacific Fleet. Midway Atoll falls. A dark chapter for the United States Navy.'}</p>
-    <button class="btn" onclick="document.getElementById('overlay').classList.add('hidden');resetGame()">Fight again</button>
-  `;
+  setBadge('over');
+  const usWon = winner === 'player';
+  const overlay = document.getElementById('overlay');
+  const accuracy = usWon
+    ? (playerShotCount > 0 ? Math.round((enemyShips.reduce((a, s) => a + s.size, 0) / playerShotCount) * 100) : 0)
+    : (aiShotCount > 0 ? Math.round((playerShips.reduce((a, s) => a + s.size, 0) / aiShotCount) * 100) : 0);
+
+  overlay.querySelector('.modal').innerHTML =
+    '<div style="font-size:10px;letter-spacing:4px;color:#3a5a7a;text-transform:uppercase;margin-bottom:12px">After action report</div>' +
+    '<h3>' + (usWon ? 'Victory at Midway' : 'The IJN prevails') + '</h3>' +
+    '<p>' + (usWon
+      ? 'All four Japanese carriers \u2014 Akagi, Kaga, S\u014dry\u016b, and Hiry\u016b \u2014 have been sunk. A decisive turning point in the Pacific War. History remembers this engagement.'
+      : 'The Imperial Japanese Navy has neutralized the Pacific Fleet. Midway Atoll falls. A dark chapter for the United States Navy.') + '</p>' +
+    '<div class="stats">' +
+      'Your shots fired: ' + playerShotCount + '<br>' +
+      'IJN shots fired: ' + aiShotCount + '<br>' +
+      'Winner accuracy: ' + accuracy + '%' +
+    '</div>' +
+    '<button class="btn" onclick="document.getElementById(\'overlay\').classList.add(\'hidden\');resetGame()">Fight again</button>';
   overlay.classList.remove('hidden');
 }
 
-function playerFire(r,c){
-  if(turn!=='player'||gameOver) return;
-  const v=enemyBoard[r][c];
-  if(v==='hit'||v==='miss'||v==='sunk') return;
-  if(typeof v==='number'&&v>0){
-    const{sunk,ship}=registerHit(enemyShips,enemyBoard,r,c);
-    if(sunk) setStatus('💥',`${ship.name} sunk! The Imperial fleet takes a decisive blow, Admiral.`);
-    else setStatus('🎯',`Hit! Enemy vessel struck at ${COLS[c]}${r+1}. Fire again.`);
-    if(allSunk(enemyShips)){endGame('player');return;}
+/* ===== PLAYER FIRE ===== */
+function playerFire(r, c) {
+  if (turn !== 'player' || gameOver) return;
+  const v = enemyGrid[r][c];
+  if (v === 'hit' || v === 'miss' || v === 'sunk') return;
+
+  playerShotCount++;
+
+  if (typeof v === 'number' && v > 0) {
+    const { sunk, ship } = registerHit(enemyShips, enemyGrid, r, c);
+    renderBoards();
+    animateCell('enemy-board', r, c, sunk ? 'just-sunk' : 'just-hit');
+    if (sunk) {
+      setStatus('\u{1F4A5}', ship.name + ' sunk! The Imperial fleet takes a decisive blow, Admiral.');
+      addLog('You sank ' + ship.name + '!', 'sunk');
+    } else {
+      setStatus('\u{1F3AF}', 'Hit at ' + cellRef(r, c) + '! Enemy vessel struck.');
+      addLog('Hit at ' + cellRef(r, c), 'hit');
+    }
+    if (allSunk(enemyShips)) { updateFleets(); updateShotCounts(); endGame('player'); return; }
   } else {
-    enemyBoard[r][c]='miss';
-    setStatus('🌊',`Miss at ${COLS[c]}${r+1}. Shells fall into the Pacific.`);
+    enemyGrid[r][c] = 'miss';
+    renderBoards();
+    animateCell('enemy-board', r, c, 'just-miss');
+    setStatus('\u{1F30A}', 'Miss at ' + cellRef(r, c) + '. Shells fall into the Pacific.');
+    addLog('Miss at ' + cellRef(r, c), 'miss');
   }
+
   updateFleets();
-  renderBoards();
-  turn='ai';
+  updateShotCounts();
+  turn = 'ai';
   setBadge('ai');
-  setTimeout(aiFire,850);
+  setTimeout(aiFire, 800);
 }
 
-function aiFire(){
-  if(gameOver) return;
-  let r,c,found=false;
+/* ===== AI — INTELLIGENT HUNT/TARGET ===== */
 
-  if(ai.mode==='destroy'&&ai.queue.length>0){
-    while(ai.queue.length>0){
-      const[pr,pc]=ai.queue.shift();
-      if(pr>=0&&pr<SIZE&&pc>=0&&pc<SIZE&&!ai.tried.has(pr+','+pc)){
-        r=pr;c=pc;found=true;break;
+function aiGetHuntTarget() {
+  /* Checkerboard parity — only fire on cells where (r+c) is even first,
+     which guarantees finding every ship of size >= 2 in half the shots.
+     Fall back to odd-parity cells when even ones are exhausted. */
+  const candidates = [];
+  const fallback = [];
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      if (ai.tried.has(r * GRID + c)) continue;
+      if ((r + c) % 2 === 0) candidates.push([r, c]);
+      else fallback.push([r, c]);
+    }
+  }
+  const pool = candidates.length > 0 ? candidates : fallback;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function aiAddAdjacentTargets(r, c) {
+  const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < GRID && nc >= 0 && nc < GRID && !ai.tried.has(nr * GRID + nc)) {
+      if (!ai.targets.some(t => t[0] === nr && t[1] === nc)) {
+        ai.targets.push([nr, nc]);
       }
     }
-    if(!found) ai.mode='hunt';
+  }
+}
+
+function aiPrioritizeLineTargets() {
+  /* If we have 2+ unsunk hits, detect the line direction and
+     prioritize extending the line at both ends. */
+  if (ai.hits.length < 2) return;
+
+  /* Find hits belonging to the same ship (same grid value or adjacent) */
+  const sorted = [...ai.hits].sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
+  let isHoriz = true, isVert = true;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i][0] !== sorted[0][0]) isHoriz = false;
+    if (sorted[i][1] !== sorted[0][1]) isVert = false;
   }
 
-  if(!found){
-    ai.mode='hunt';
-    let attempts=0;
-    do{
-      r=Math.floor(Math.random()*SIZE);
-      c=Math.floor(Math.random()*SIZE);
-      attempts++;
-    }while(ai.tried.has(r+','+c)&&attempts<200);
+  const priority = [];
+  if (isHoriz) {
+    const row = sorted[0][0];
+    const minC = Math.min(...sorted.map(h => h[1]));
+    const maxC = Math.max(...sorted.map(h => h[1]));
+    if (minC - 1 >= 0 && !ai.tried.has(row * GRID + (minC - 1)))
+      priority.push([row, minC - 1]);
+    if (maxC + 1 < GRID && !ai.tried.has(row * GRID + (maxC + 1)))
+      priority.push([row, maxC + 1]);
+  } else if (isVert) {
+    const col = sorted[0][1];
+    const minR = Math.min(...sorted.map(h => h[0]));
+    const maxR = Math.max(...sorted.map(h => h[0]));
+    if (minR - 1 >= 0 && !ai.tried.has((minR - 1) * GRID + col))
+      priority.push([minR - 1, col]);
+    if (maxR + 1 < GRID && !ai.tried.has((maxR + 1) * GRID + col))
+      priority.push([maxR + 1, col]);
   }
 
-  ai.tried.add(r+','+c);
-  const v=playerBoard[r][c];
+  if (priority.length > 0) {
+    /* Move priority targets to front of queue */
+    const rest = ai.targets.filter(t =>
+      !priority.some(p => p[0] === t[0] && p[1] === t[1])
+    );
+    ai.targets = [...priority, ...rest];
+  }
+}
 
-  if(typeof v==='number'&&v>0){
-    const{sunk,ship}=registerHit(playerShips,playerBoard,r,c);
-    if(sunk){
-      ai.mode='hunt';ai.queue=[];
-      setStatus('💀',`${ship.name} has been sunk by the IJN! Return fire, Admiral.`);
-    } else {
-      ai.mode='destroy';
-      [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc])=>{
-        const nr=r+dr,nc=c+dc;
-        if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&!ai.tried.has(nr+','+nc)){
-          ai.queue.push([nr,nc]);
-        }
-      });
-      setStatus('⚠️',`IJN hit at ${COLS[c]}${r+1}! Your vessel is taking damage.`);
-    }
-    if(allSunk(playerShips)){endGame('ai');return;}
+function aiClearSunkShipTargets(ship) {
+  /* Remove from hits list any cells belonging to this sunk ship,
+     and remove adjacent targets that are no longer useful. */
+  const sunkSet = new Set(ship.cells.map(([r, c]) => r * GRID + c));
+  ai.hits = ai.hits.filter(([r, c]) => !sunkSet.has(r * GRID + c));
+
+  if (ai.hits.length === 0) {
+    ai.targets = [];
+    ai.mode = 'hunt';
   } else {
-    if(v===0) playerBoard[r][c]='miss';
-    setStatus('😮‍💨',`IJN miss at ${COLS[c]}${r+1}. Your fleet holds. Return fire, Admiral.`);
+    /* Still have unsunk hits — re-derive targets from remaining hits */
+    ai.targets = [];
+    for (const [hr, hc] of ai.hits) {
+      aiAddAdjacentTargets(hr, hc);
+    }
+    aiPrioritizeLineTargets();
+  }
+}
+
+function aiFire() {
+  if (gameOver) return;
+  let r, c;
+
+  if (ai.mode === 'target' && ai.targets.length > 0) {
+    aiPrioritizeLineTargets();
+    while (ai.targets.length > 0) {
+      const [tr, tc] = ai.targets.shift();
+      if (!ai.tried.has(tr * GRID + tc)) {
+        r = tr; c = tc;
+        break;
+      }
+    }
+    if (r === undefined) ai.mode = 'hunt';
+  }
+
+  if (r === undefined) {
+    ai.mode = 'hunt';
+    const cell = aiGetHuntTarget();
+    if (!cell) { turn = 'player'; setBadge('player'); return; }
+    r = cell[0]; c = cell[1];
+  }
+
+  ai.tried.add(r * GRID + c);
+  aiShotCount++;
+  const v = playerGrid[r][c];
+
+  if (typeof v === 'number' && v > 0) {
+    const { sunk, ship } = registerHit(playerShips, playerGrid, r, c);
+    renderBoards();
+    animateCell('player-board', r, c, sunk ? 'just-sunk' : 'just-hit');
+
+    if (sunk) {
+      aiClearSunkShipTargets(ship);
+      setStatus('\u{1F480}', ship.name + ' has been sunk by the IJN!');
+      addLog('IJN sank ' + ship.name + '!', 'sunk');
+    } else {
+      ai.mode = 'target';
+      ai.hits.push([r, c]);
+      aiAddAdjacentTargets(r, c);
+      aiPrioritizeLineTargets();
+      setStatus('\u26A0\uFE0F', 'IJN hit at ' + cellRef(r, c) + '! Your vessel is taking damage.');
+      addLog('IJN hit at ' + cellRef(r, c), 'hit');
+    }
+    if (allSunk(playerShips)) { updateFleets(); updateShotCounts(); endGame('ai'); return; }
+  } else {
+    if (v === 0) playerGrid[r][c] = 'miss';
+    renderBoards();
+    animateCell('player-board', r, c, 'just-miss');
+    setStatus('\u{1F60E}', 'IJN miss at ' + cellRef(r, c) + '. Your fleet holds. Return fire, Admiral.');
+    addLog('IJN miss at ' + cellRef(r, c), 'miss');
   }
 
   updateFleets();
-  renderBoards();
-  turn='player';
+  updateShotCounts();
+  turn = 'player';
   setBadge('player');
 }
 </script>
