@@ -1,0 +1,16 @@
+{
+  "name": "midway-battleship",
+  "version": "1.0.0",
+  "main": "src/game.js",
+  "scripts": {
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Battle of Midway — Battleship game",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
