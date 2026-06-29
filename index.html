@@ -391,9 +391,32 @@ function resetGame() {
   renderLog();
 }
 
-/* ===== RENDERING ===== */
+/* ===== SHARED UTILITIES ===== */
 function cellRef(r, c) { return COLS[c] + (r + 1); }
 
+function isTargeted(v) { return v === 'hit' || v === 'miss' || v === 'sunk'; }
+
+function isShip(v) { return typeof v === 'number' && v > 0; }
+
+function renderFleetPanel(ships) {
+  return ships.map(s => {
+    const pips = Array.from({ length: s.size }, (_, i) =>
+      '<span class="pip' + (i < s.hits ? ' pip-hit' : '') + '"></span>'
+    ).join('');
+    return '<div class="ship-row' + (s.sunk ? ' sunk-ship' : '') + '">' +
+      '<span class="ship-pips">' + pips + '</span> ' +
+      (s.sunk ? '\u2620 ' : '\u25B8 ') + s.name + '</div>';
+  }).join('');
+}
+
+function endTurn(nextTurn) {
+  updateFleets();
+  updateShotCounts();
+  turn = nextTurn;
+  setBadge(nextTurn);
+}
+
+/* ===== RENDERING ===== */
 function renderBoard(id, grid, isEnemy) {
   const tbl = document.getElementById(id);
   let html = '<tr><td class="coord-cell"><span></span></td>';
@@ -407,8 +430,8 @@ function renderBoard(id, grid, isEnemy) {
       if (v === 'hit')       { cls = 'ship-hit'; content = '\u2715'; }
       else if (v === 'sunk') { cls = 'sunk';     content = '\u2715'; }
       else if (v === 'miss') { cls = 'miss';     content = '\u00B7'; }
-      else if (!isEnemy && typeof v === 'number' && v > 0) { cls = 'ship-show'; }
-      const clickable = isEnemy && !gameOver && v !== 'hit' && v !== 'miss' && v !== 'sunk';
+      else if (!isEnemy && isShip(v)) { cls = 'ship-show'; }
+      const clickable = isEnemy && !gameOver && !isTargeted(v);
       if (clickable) cls += ' enemy-target';
       const onclick = clickable ? ' onclick="playerFire(' + r + ',' + c + ')"' : '';
       html += '<td class="' + cls + '"' + onclick + '><span>' + content + '</span></td>';
@@ -456,23 +479,8 @@ function updateShotCounts() {
 }
 
 function updateFleets() {
-  document.getElementById('us-fleet').innerHTML = playerShips.map(s => {
-    const pips = Array.from({ length: s.size }, (_, i) =>
-      '<span class="pip' + (i < s.hits ? ' pip-hit' : '') + '"></span>'
-    ).join('');
-    return '<div class="ship-row' + (s.sunk ? ' sunk-ship' : '') + '">' +
-      '<span class="ship-pips">' + pips + '</span> ' +
-      (s.sunk ? '\u2620 ' : '\u25B8 ') + s.name + '</div>';
-  }).join('');
-
-  document.getElementById('jp-fleet').innerHTML = enemyShips.map(s => {
-    const pips = Array.from({ length: s.size }, (_, i) =>
-      '<span class="pip' + (i < s.hits ? ' pip-hit' : '') + '"></span>'
-    ).join('');
-    return '<div class="ship-row' + (s.sunk ? ' sunk-ship' : '') + '">' +
-      '<span class="ship-pips">' + pips + '</span> ' +
-      (s.sunk ? '\u2620 ' : '\u25B8 ') + s.name + '</div>';
-  }).join('');
+  document.getElementById('us-fleet').innerHTML = renderFleetPanel(playerShips);
+  document.getElementById('jp-fleet').innerHTML = renderFleetPanel(enemyShips);
 }
 
 function addLog(msg, type) {
@@ -534,11 +542,11 @@ function endGame(winner) {
 function playerFire(r, c) {
   if (turn !== 'player' || gameOver) return;
   const v = enemyGrid[r][c];
-  if (v === 'hit' || v === 'miss' || v === 'sunk') return;
+  if (isTargeted(v)) return;
 
   playerShotCount++;
 
-  if (typeof v === 'number' && v > 0) {
+  if (isShip(v)) {
     const { sunk, ship } = registerHit(enemyShips, enemyGrid, r, c);
     renderBoards();
     animateCell('enemy-board', r, c, sunk ? 'just-sunk' : 'just-hit');
@@ -549,7 +557,7 @@ function playerFire(r, c) {
       setStatus('\u{1F3AF}', 'Hit at ' + cellRef(r, c) + '! Enemy vessel struck.');
       addLog('Hit at ' + cellRef(r, c), 'hit');
     }
-    if (allSunk(enemyShips)) { updateFleets(); updateShotCounts(); endGame('player'); return; }
+    if (allSunk(enemyShips)) { endTurn('ai'); endGame('player'); return; }
   } else {
     enemyGrid[r][c] = 'miss';
     renderBoards();
@@ -558,10 +566,7 @@ function playerFire(r, c) {
     addLog('Miss at ' + cellRef(r, c), 'miss');
   }
 
-  updateFleets();
-  updateShotCounts();
-  turn = 'ai';
-  setBadge('ai');
+  endTurn('ai');
   setTimeout(aiFire, 800);
 }
 
@@ -683,7 +688,7 @@ function aiFire() {
   aiShotCount++;
   const v = playerGrid[r][c];
 
-  if (typeof v === 'number' && v > 0) {
+  if (isShip(v)) {
     const { sunk, ship } = registerHit(playerShips, playerGrid, r, c);
     renderBoards();
     animateCell('player-board', r, c, sunk ? 'just-sunk' : 'just-hit');
@@ -700,7 +705,7 @@ function aiFire() {
       setStatus('\u26A0\uFE0F', 'IJN hit at ' + cellRef(r, c) + '! Your vessel is taking damage.');
       addLog('IJN hit at ' + cellRef(r, c), 'hit');
     }
-    if (allSunk(playerShips)) { updateFleets(); updateShotCounts(); endGame('ai'); return; }
+    if (allSunk(playerShips)) { endTurn('player'); endGame('ai'); return; }
   } else {
     if (v === 0) playerGrid[r][c] = 'miss';
     renderBoards();
@@ -709,10 +714,7 @@ function aiFire() {
     addLog('IJN miss at ' + cellRef(r, c), 'miss');
   }
 
-  updateFleets();
-  updateShotCounts();
-  turn = 'player';
-  setBadge('player');
+  endTurn('player');
 }
 </script>
 </body>
